@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     if (sflag == 1) {
         ptrace(PTRACE_SINGLESTEP, pid, NULL, 0);
     }
-    Breakpoint** bplist = malloc(sizeof(Breakpoint *) * 256);
+    Breakpoint **bplist = malloc(sizeof(Breakpoint *) * 256);
     if (bps) {
         int num_bpts = sizeof(bps) / sizeof(char *);
         if (num_bpts > 256) {
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
                case 'c':
                    break;
                default:
-                   goto redo; //TODO: get rid of this shit somehow
+                   goto redo;   //TODO: get rid of this shit somehow
             }
             ptrace(PTRACE_CONT, pid, NULL, 0);
         }
