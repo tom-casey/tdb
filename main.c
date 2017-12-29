@@ -5,11 +5,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/ptrace.h>
+#include <assert.h>
 typedef struct  {
-	long data;
+	long save;
 	void *addr;
+    int enabled;
 } Breakpoint;
 int fork_to_child(int argc,char *argv[]);
+/*creds to stackoverflow*/
 char** str_split(char* a_str, const char a_delim)
 {
     char** result    = 0;
@@ -95,6 +98,18 @@ int main(int argc, char *argv[]){
 	if(sflag == 1){
 		ptrace(PTRACE_SINGLESTEP,pid,NULL,0);
 	}
+    Breakpoint* bplist[] = malloc(sizeof(Breakpoint*)*256);
+    if(bps){
+        int num_bpts = sizof(bps)/sizeof(char*);
+        if (num_bpts > 256){
+            fprintf(stderr,"Error: Too many breakpoints");
+        }
+        for(int i=0;i<num_bts;i++){
+           bplist[i] = malloc(sizeof(Breakpoint); 
+           sscanf(bps[i],"%x",&bplist[i]->addr);
+        }
+        insert_bp(bplist[i]);
+    }
 	int status;
 	while(pid == waitpid(pid,&status,0)){
 		if (WIFEXITED(status)){
@@ -136,8 +151,9 @@ int fork_to_child(int argc, char *argv[]){
 	return childpid;
 }
 	
-int insertbp(Breakpoint bp, pid_t pid){
-	long data = ptrace(PTRACE_PEEKDATA,pid,bp.addr,NULL);
+int insertbp(Breakpoint* bp, pid_t pid){
+	bp->data = ptrace(PTRACE_PEEKDATA,pid,bp->addr,NULL);
 	//replace last byte in data with our INT 3(0xcc) instruction
-	ptrace(PTRACE_POKEDATA,pid,bp.addr,(data|0xcc));
+	ptrace(PTRACE_POKEDATA,pid,bp->addr,(data|0xcc));
+    bp->enabled = 1;
 }
