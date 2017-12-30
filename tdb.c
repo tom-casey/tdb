@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/ptrace.h>
+#include <sys/user.h>
 #include <assert.h>
 #include "tdb.h"
 #include "breakpoint.h"
@@ -81,7 +82,7 @@ int main(int argc, char *argv[]) {
                case 'q':
                    exit(EXIT_SUCCESS);
                case 'r':
-                   printregs(pid);
+                   print_registers(pid);
                    break;
                case 's':
                    ptrace(PTRACE_SINGLESTEP, pid, NULL, 0);
@@ -105,4 +106,16 @@ int fork_to_child(int argc, char *argv[]) {
         execvp(args[0], args);
     }
     return childpid;
+}
+int print_registers(pid_t pid){
+    struct user_regs_struct regs;
+    ptrace(PTRACE_GETREGS,pid,NULL,&regs);
+    printf("rax: %x\trbx: %x",regs.rax,regs.rbx);
+    printf("rcx: %x\trdx: %x",regs.rcx,regs.rdx);
+    printf("rbp: %x\trsp: %x",regs.rbp,regs.rsp);
+    printf("rsi: %x\trdi: %x",regs.rsi,regs.rdi);
+    printf("r8: %x\tr9: %x",regs.r8,regs.r9);
+    printf("r10: %x\tr11: %x",regs.r10,regs.r11);
+    printf("r12: %x\tr13: %x",regs.r12,regs.r13);
+    printf("r14: %x\tr15: %x",regs.r14,regs.r15);
 }

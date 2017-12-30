@@ -1,6 +1,7 @@
 #include <string.h>
+#include <stdlib.h>
 #include <assert.h>
-/*creds to stackoverflow*/
+/*creds to hmjd on stackoverflow*/
 char **str_split(char *a_str, const char a_delim) {
     char **result = 0;
     size_t count = 0;

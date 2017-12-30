@@ -6,5 +6,5 @@ OBJ = tdb.o breakpoint.o utils.o
 %.o: %.c $(DEPS)
 		$(CC) -c -o $@ $< $(CFLAGS)
 
-hellomake: $(OBJ)
+tdb: $(OBJ)
 		gcc -o $@ $^ $(CFLAGS)
