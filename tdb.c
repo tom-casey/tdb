@@ -110,12 +110,16 @@ int fork_to_child(int argc, char *argv[]) {
 int print_registers(pid_t pid){
     struct user_regs_struct regs;
     ptrace(PTRACE_GETREGS,pid,NULL,&regs);
-    printf("rax: %x\trbx: %x",regs.rax,regs.rbx);
-    printf("rcx: %x\trdx: %x",regs.rcx,regs.rdx);
-    printf("rbp: %x\trsp: %x",regs.rbp,regs.rsp);
-    printf("rsi: %x\trdi: %x",regs.rsi,regs.rdi);
-    printf("r8: %x\tr9: %x",regs.r8,regs.r9);
-    printf("r10: %x\tr11: %x",regs.r10,regs.r11);
-    printf("r12: %x\tr13: %x",regs.r12,regs.r13);
-    printf("r14: %x\tr15: %x",regs.r14,regs.r15);
+    #ifdef __x86_64__
+    printf("rax: %x\trbx: %x\n",regs.rax,regs.rbx);
+    printf("rcx: %x\trdx: %x\n",regs.rcx,regs.rdx);
+    printf("rbp: %x\trsp: %x\n",regs.rbp,regs.rsp);
+    printf("rsi: %x\trdi: %x\n",regs.rsi,regs.rdi);
+    printf("r8: %x\tr9: %x\n",regs.r8,regs.r9);
+    printf("r10: %x\tr11: %x\n",regs.r10,regs.r11);
+    printf("r12: %x\tr13: %x\n",regs.r12,regs.r13);
+    printf("r14: %x\tr15: %x\n",regs.r14,regs.r15);
+    #else
+    puts("Architecure not supported");
+    
 }
