@@ -61,7 +61,8 @@ int main(int argc, char *argv[]) {
                         "%s is not a valid memory address. Skipping\n",
                         bps[i]);
             }
-            insert_bp(bplist[i]);
+            printf("Breakpoint to be set @ %x\n",bplist[i]->addr);
+            insert_bp(bplist[i], pid);
         }
     }
     int status;
@@ -121,5 +122,5 @@ int print_registers(pid_t pid){
     printf("r14: %x\tr15: %x\n",regs.r14,regs.r15);
     #else
     puts("Architecure not supported");
-    
+    #endif
 }

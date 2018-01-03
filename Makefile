@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-I.
+CFLAGS=-lexplain -I.
 DEPS = tdb.h breakpoint.h
 OBJ = tdb.o breakpoint.o utils.o
 
