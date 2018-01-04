@@ -45,18 +45,15 @@ int main(int argc, char *argv[]) {
     if (sflag == 1) {
         ptrace(PTRACE_SINGLESTEP, pid, NULL, 0);
     }
-    //int ss_status;
-    //waitpid(pid, &ss_status, 0);
-    //if(ss_status>>8 == (SIGTRAP | (PTRACE_EVENT_EXEC<<8))){
-    //    fprintf(stderr, "Failed to attach to proccess\n");
-    //    exit(EXIT_FAILURE);
-    //}
-    /*int t_status;
-    waitpid(pid, &t_status,0);
-    if(WIFSTOPPED(t_status)){
-        printf("Attached to process %d\n",pid);
-        ptrace(PTRACE_CONT,pid,NULL,0);
-    }*/
+    int ss_status;
+    waitpid(pid, &ss_status, 0);
+    if(!WIFSTOPPED(ss_status)){
+        fprintf(stderr, "Failed to attach to proccess\n");
+        exit(EXIT_FAILURE);
+    }
+    else{
+        printf("Attached to process %d sucessfully\n",pid);
+    }
     Breakpoint **bplist = malloc(sizeof(Breakpoint *) * 256);
     if (bps) {
         int num_bpts = sizeof(bps) / sizeof(char *);
@@ -72,7 +69,7 @@ int main(int argc, char *argv[]) {
                         bps[i]);
             }
             printf("Breakpoint to be set @ %x\n",bplist[i]->addr);
-    //        insert_bp(bplist[i], pid);
+            insert_bp(bplist[i], pid);
         }
     }
     ptrace(PTRACE_CONT, pid, NULL, 0);
@@ -116,7 +113,7 @@ int fork_to_child(int argc, char *argv[]) {
         char **args = malloc(sizeof(argv[0]) * (argc + 1));
         memcpy(args, argv, sizeof(argv[0]) * argc);
         args[argc] = NULL;
-        execvp(args[0], args);
+        execv(args[0], args);
     }
     return childpid;
 }
