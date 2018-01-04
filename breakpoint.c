@@ -14,6 +14,7 @@ int insert_bp(Breakpoint * bp, pid_t pid) {
     }
     //replace last byte in data with our INT 3(0xcc) instruction
     ptrace(PTRACE_POKEDATA, pid, bp->addr, ((bp->save & ~0xff) | 0xcc));
+    printf("New data at %x is %x\n",bp->addr,((bp->save & ~0xff) | 0xcc));
     bp->enabled = 1;
     return 1;
 }

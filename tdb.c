@@ -41,12 +41,22 @@ int main(int argc, char *argv[]) {
     }
     if (pid == -1) {
         pid = fork_to_child(argc - optind, &argv[optind]);
-    } else {
-        ptrace(PTRACE_ATTACH, pid, NULL, 0);
     }
     if (sflag == 1) {
         ptrace(PTRACE_SINGLESTEP, pid, NULL, 0);
     }
+    //int ss_status;
+    //waitpid(pid, &ss_status, 0);
+    //if(ss_status>>8 == (SIGTRAP | (PTRACE_EVENT_EXEC<<8))){
+    //    fprintf(stderr, "Failed to attach to proccess\n");
+    //    exit(EXIT_FAILURE);
+    //}
+    /*int t_status;
+    waitpid(pid, &t_status,0);
+    if(WIFSTOPPED(t_status)){
+        printf("Attached to process %d\n",pid);
+        ptrace(PTRACE_CONT,pid,NULL,0);
+    }*/
     Breakpoint **bplist = malloc(sizeof(Breakpoint *) * 256);
     if (bps) {
         int num_bpts = sizeof(bps) / sizeof(char *);
@@ -62,9 +72,10 @@ int main(int argc, char *argv[]) {
                         bps[i]);
             }
             printf("Breakpoint to be set @ %x\n",bplist[i]->addr);
-            insert_bp(bplist[i], pid);
+    //        insert_bp(bplist[i], pid);
         }
     }
+    ptrace(PTRACE_CONT, pid, NULL, 0);
     int status;
     while (pid == waitpid(pid, &status, 0)) {
         if (WIFEXITED(status)) {
@@ -99,6 +110,7 @@ int main(int argc, char *argv[]) {
 
 int fork_to_child(int argc, char *argv[]) {
     pid_t childpid = fork();
+    ptrace(PTRACE_SETOPTIONS, childpid, NULL, PTRACE_O_TRACEEXEC);
     if (childpid == 0) {
         ptrace(PTRACE_TRACEME, 0, NULL, NULL);
         char **args = malloc(sizeof(argv[0]) * (argc + 1));
@@ -120,6 +132,7 @@ int print_registers(pid_t pid){
     printf("r10: %x\tr11: %x\n",regs.r10,regs.r11);
     printf("r12: %x\tr13: %x\n",regs.r12,regs.r13);
     printf("r14: %x\tr15: %x\n",regs.r14,regs.r15);
+    printf("rip: %x\t\n",regs.rip);
     #else
     puts("Architecure not supported");
     #endif
