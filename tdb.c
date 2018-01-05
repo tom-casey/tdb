@@ -111,9 +111,9 @@ int main(int argc, char *argv[]) {
                    }
                case 'r':
                    if(opt){
-                       print_register(opt);
+                       print_register(pid,opt);
                    }
-                   print_registers(pid);
+                   print_all_registers(pid);
                default:
                    goto redo;   //TODO: get rid of this shit somehow
             }
@@ -133,7 +133,52 @@ int fork_to_child(int argc, char *argv[]) {
     }
     return childpid;
 }
-int print_registers(pid_t pid){
+int print_register(pid_t pid, char* reg){
+    struct user_regs_struct regs;
+    unsigned long long int* addr = register_to_address(&regs, regs);
+    printf("%s: %x\n",reg,*addr);
+}
+unsigned long long int* register_to_address(struct user_regs_struct * regs, char* string){
+    unsigned long long int* return NULL;
+    switch(string){
+        case "r15":
+            return &(regs->r15);
+        case "r14":
+            return &(regs->r14);
+        case "r13":
+            return &(regs->r13);
+        case "r12":
+            return &(regs->r12);
+        case "rbp":
+            return &(regs->rbp);
+        case "rbx":
+            return &(regs->rbx);
+        case "r11":
+            return &(regs->r11);
+        case "r10":
+            return &(regs->r10);
+        case "r9":
+            return &(regs->r9);
+        case "r8":
+            return &(regs->r8);
+        case "rax":
+            return &(regs->rax);
+        case "rcx":
+            return &(regs->rcx);
+        case "rdx":
+            return &(regs->rdx);
+        case "rsi":
+            return &(regs->rsi);
+        case "rip":
+            return &(regs->rip);
+        case "eflags":
+            return &(regs->eflags);
+        case "rsp":
+            return &(regs->rsp);
+        default:
+            return -1;
+}
+int print_all_registers(pid_t pid){
     struct user_regs_struct regs;
     ptrace(PTRACE_GETREGS,pid,NULL,&regs);
     #ifdef __x86_64__
@@ -153,61 +198,7 @@ int print_registers(pid_t pid){
 int modify_register(pid_t pid, char* reg,unsigned long long int value){
     struct user_regs_struct regs;
     ptrace(PTRACE_GETREGS,pid,NULL,&regs);
-    unsigned long long int* target = NULL;
-    switch(reg){
-        case "r15":
-            target = &regs.r15
-            break;
-        case "r14":
-            target = &regs.r14
-            break;
-        case "r13":
-            target = &regs.r13
-            break;
-        case "r12":
-            target = &regs.r12
-            break;
-        case "rbp":
-            target = &regs.rbp
-            break;
-        case "rbx":
-            target = &regs.rbx
-            break;
-        case "r11":
-            target = &regs.r11
-            break;
-        case "r10":
-            target = &regs.r10
-            break;
-        case "r9":
-            target = &regs.r9
-            break;
-        case "r8":
-            target = &regs.r8
-            break;
-        case "rax":
-            target = &regs.rax
-            break;
-        case "rcx":
-            target = &regs.rcx
-            break;
-        case "rdx":
-            target = &regs.rdx
-            break;
-        case "rsi":
-            target = &regs.rsi
-            break;
-        case "rip":
-            target = &regs.rip
-            break;
-        case "eflags":
-            target = &regs.eflags
-            break;
-        case "rsp":
-            target = &regs.r15
-            break;
-        default:
-            return -1;
+        unsigned long long int target = register_to_address(&regs,reg);
         *target = value;
         ptrace(PTRACE_SETREGS,pid,NULL,&regs);
     }
