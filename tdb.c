@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
                pid = (pid_t) atoi(optarg);
                break;
            case '?':
-               fprintf(stderr, "Bad option -%c", optopt);
+               fprintf(stderr, "Bad option -%c\n", optopt);
            default:
                exit(EXIT_FAILURE);
         }
@@ -82,25 +82,26 @@ int main(int argc, char *argv[]) {
             printf("Child got killing signal %d\n", WTERMSIG(status));
         }
         if (WIFSTOPPED(status)) {
+            printf("Child caught signal %d\n",WSTOPSIG(status));
           redo:
-            printf
-                ("Child caught signal %d\n(q)uit\t(r)egisters\t(s)inglestep\t(c)ontinue\n",
-                 WSTOPSIG(status));
-            char input = getchar();
+            puts("(q)uit\t(r)egisters\t(s)inglestep\t(c)ontinue");
+            char input;
+            scanf(" %c",&input);
+            fflush(stdin);
             switch (input) {
                case 'q':
                    exit(EXIT_SUCCESS);
-               case 'r':
-                   print_registers(pid);
-                   break;
                case 's':
                    ptrace(PTRACE_SINGLESTEP, pid, NULL, 0);
-               case 'c':
                    break;
+               case 'c':
+                   ptrace(PTRACE_CONT, pid, NULL, 0);
+                   break;
+               case 'r':
+                   print_registers(pid);
                default:
                    goto redo;   //TODO: get rid of this shit somehow
             }
-            ptrace(PTRACE_CONT, pid, NULL, 0);
         }
     }
 }
