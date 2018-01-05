@@ -13,6 +13,7 @@ int fork_to_child(int argc, char *argv[]);
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         fprintf(stderr, "Usage: %s [OPTION] \"program to debug\"", argv[0]);
+        exit(EXIT_FAILURE);
     }
     char *brkpt;
     pid_t pid = -1;
@@ -86,7 +87,9 @@ int main(int argc, char *argv[]) {
           redo:
             puts("(q)uit\t(r)egisters\t(s)inglestep\t(c)ontinue\t(m)odify registers");
             char input;
-            scanf(" %c",&input);
+            char* opt;
+            unsigned long long int val;
+            scanf(" %c %s %d",&input,&opt,&val);
             fflush(stdin);
             switch (input) {
                case 'q':
@@ -98,8 +101,18 @@ int main(int argc, char *argv[]) {
                    ptrace(PTRACE_CONT, pid, NULL, 0);
                    break;
                case 'm':
-                   modify_register(pid);
+                   if(!opt||!value){
+                       printf("Error invalid command: m [register] [value]\n");
+                       goto redo;
+                   }
+                   if(modify_register(pid,opt,val)==-1){
+                       printf("Invalid register!\n");
+                       goto redo;
+                   }
                case 'r':
+                   if(opt){
+                       print_register(opt);
+                   }
                    print_registers(pid);
                default:
                    goto redo;   //TODO: get rid of this shit somehow
@@ -137,11 +150,11 @@ int print_registers(pid_t pid){
     puts("Architecure not supported");
     #endif
 }
-int modify_register(pid_t pid, char* register,unsigned long long int value){
+int modify_register(pid_t pid, char* reg,unsigned long long int value){
     struct user_regs_struct regs;
     ptrace(PTRACE_GETREGS,pid,NULL,&regs);
     unsigned long long int* target = NULL;
-    switch(register){
+    switch(reg){
         case "r15":
             target = &regs.r15
             break;
