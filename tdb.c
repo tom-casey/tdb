@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
         if (WIFSTOPPED(status)) {
             printf("Child caught signal %d\n",WSTOPSIG(status));
           redo:
-            puts("(q)uit\t(r)egisters\t(s)inglestep\t(c)ontinue");
+            puts("(q)uit\t(r)egisters\t(s)inglestep\t(c)ontinue\t(m)odify registers");
             char input;
             scanf(" %c",&input);
             fflush(stdin);
@@ -97,6 +97,8 @@ int main(int argc, char *argv[]) {
                case 'c':
                    ptrace(PTRACE_CONT, pid, NULL, 0);
                    break;
+               case 'm':
+                   modify_register(pid);
                case 'r':
                    print_registers(pid);
                default:
@@ -124,14 +126,76 @@ int print_registers(pid_t pid){
     #ifdef __x86_64__
     printf("rax: %x\trbx: %x\n",regs.rax,regs.rbx);
     printf("rcx: %x\trdx: %x\n",regs.rcx,regs.rdx);
-    printf("rbp: %x\trsp: %x\n",regs.rbp,regs.rsp);
-    printf("rsi: %x\trdi: %x\n",regs.rsi,regs.rdi);
     printf("r8: %x\tr9: %x\n",regs.r8,regs.r9);
     printf("r10: %x\tr11: %x\n",regs.r10,regs.r11);
     printf("r12: %x\tr13: %x\n",regs.r12,regs.r13);
     printf("r14: %x\tr15: %x\n",regs.r14,regs.r15);
-    printf("rip: %x\t\n",regs.rip);
+    printf("rbp: %x\trsp: %x\n",regs.rbp,regs.rsp);
+    printf("rsi: %x\trdi: %x\n",regs.rsi,regs.rdi);
+    printf("rip: %x\teflags: %x\n",regs.rip,regs.eflags);
     #else
     puts("Architecure not supported");
     #endif
+}
+int modify_register(pid_t pid, char* register,unsigned long long int value){
+    struct user_regs_struct regs;
+    ptrace(PTRACE_GETREGS,pid,NULL,&regs);
+    unsigned long long int* target = NULL;
+    switch(register){
+        case "r15":
+            target = &regs.r15
+            break;
+        case "r14":
+            target = &regs.r14
+            break;
+        case "r13":
+            target = &regs.r13
+            break;
+        case "r12":
+            target = &regs.r12
+            break;
+        case "rbp":
+            target = &regs.rbp
+            break;
+        case "rbx":
+            target = &regs.rbx
+            break;
+        case "r11":
+            target = &regs.r11
+            break;
+        case "r10":
+            target = &regs.r10
+            break;
+        case "r9":
+            target = &regs.r9
+            break;
+        case "r8":
+            target = &regs.r8
+            break;
+        case "rax":
+            target = &regs.rax
+            break;
+        case "rcx":
+            target = &regs.rcx
+            break;
+        case "rdx":
+            target = &regs.rdx
+            break;
+        case "rsi":
+            target = &regs.rsi
+            break;
+        case "rip":
+            target = &regs.rip
+            break;
+        case "eflags":
+            target = &regs.eflags
+            break;
+        case "rsp":
+            target = &regs.r15
+            break;
+        default:
+            return -1;
+        *target = value;
+        ptrace(PTRACE_SETREGS,pid,NULL,&regs);
+    }
 }

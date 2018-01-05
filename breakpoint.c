@@ -18,3 +18,8 @@ int insert_bp(Breakpoint * bp, pid_t pid) {
     bp->enabled = 1;
     return 1;
 }
+int remove_bp(Breakpoint * bp, pid_t pid){
+    ptrace(PTRACE_POKEDATA, pid, bp->addr,bp->save);
+    bp->enabled = 0;
+    return 1;
+}
