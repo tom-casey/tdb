@@ -12,7 +12,7 @@
 int fork_to_child(int argc, char *argv[]);
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s [OPTION] \"program to debug\"", argv[0]);
+        fprintf(stderr, "Usage: %s [OPTION] \"program to debug\"\n", argv[0]);
         exit(EXIT_FAILURE);
     }
     char *brkpt;
@@ -63,13 +63,13 @@ int main(int argc, char *argv[]) {
         }
         for (int i = 0; i < num_bpts; i++) {
             bplist[i] = malloc(sizeof(Breakpoint));
-            sscanf(bps[i], "%x", &bplist[i]->addr);
+            sscanf(bps[i], "%p", &bplist[i]->addr);
             if (!(bplist[i]->addr)) {
                 fprintf(stderr,
                         "%s is not a valid memory address. Skipping\n",
                         bps[i]);
             }
-            printf("Breakpoint to be set @ %x\n",bplist[i]->addr);
+            printf("Breakpoint to be set @ %p\n",bplist[i]->addr);
             insert_bp(bplist[i], pid);
         }
     }
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
             char input;
             char* opt;
             unsigned long long int val;
-            scanf(" %c %s %d",&input,&opt,&val);
+            scanf(" %c %s %llx",&input,opt,&val);
             fflush(stdin);
             switch (input) {
                case 'q':
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
                    ptrace(PTRACE_CONT, pid, NULL, 0);
                    break;
                case 'm':
-                   if(!opt||!value){
+                   if(!opt||!val){
                        printf("Error invalid command: m [register] [value]\n");
                        goto redo;
                    }
@@ -135,62 +135,60 @@ int fork_to_child(int argc, char *argv[]) {
 }
 int print_register(pid_t pid, char* reg){
     struct user_regs_struct regs;
-    unsigned long long int* addr = register_to_address(&regs, regs);
-    printf("%s: %x\n",reg,*addr);
+    unsigned long long int* addr = register_to_address(&regs, reg);
+    printf("%s: %llx\n",reg,*addr);
 }
 unsigned long long int* register_to_address(struct user_regs_struct * regs, char* string){
-    unsigned long long int* return NULL;
-    switch(string){
-        case "r15":
+        if(strcmp(string,"r15")==0)
             return &(regs->r15);
-        case "r14":
+        if(strcmp(string,"r14")==0)
             return &(regs->r14);
-        case "r13":
+        if(strcmp(string,"r13")==0)
             return &(regs->r13);
-        case "r12":
+        if(strcmp(string,"r12")==0)
             return &(regs->r12);
-        case "rbp":
+        if(strcmp(string,"rbp")==0)
             return &(regs->rbp);
-        case "rbx":
+        if(strcmp(string,"rbx")==0)
             return &(regs->rbx);
-        case "r11":
+        if(strcmp(string,"r11")==0)
             return &(regs->r11);
-        case "r10":
+        if(strcmp(string,"r10")==0)
             return &(regs->r10);
-        case "r9":
+        if(strcmp(string,"r9")==0)
             return &(regs->r9);
-        case "r8":
+        if(strcmp(string,"r8")==0)
             return &(regs->r8);
-        case "rax":
+        if(strcmp(string,"rax")==0)
             return &(regs->rax);
-        case "rcx":
+        if(strcmp(string,"rcx")==0)
             return &(regs->rcx);
-        case "rdx":
+        if(strcmp(string,"rdx")==0)
             return &(regs->rdx);
-        case "rsi":
+        if(strcmp(string,"rsi")==0)
             return &(regs->rsi);
-        case "rip":
+        if(strcmp(string,"rip")==0)
             return &(regs->rip);
-        case "eflags":
+        if(strcmp(string,"eflags")==0)
             return &(regs->eflags);
-        case "rsp":
+        if(strcmp(string,"rsp")==0)
             return &(regs->rsp);
-        default:
-            return -1;
+        else
+            return NULL;
 }
 int print_all_registers(pid_t pid){
     struct user_regs_struct regs;
     ptrace(PTRACE_GETREGS,pid,NULL,&regs);
     #ifdef __x86_64__
-    printf("rax: %x\trbx: %x\n",regs.rax,regs.rbx);
-    printf("rcx: %x\trdx: %x\n",regs.rcx,regs.rdx);
-    printf("r8: %x\tr9: %x\n",regs.r8,regs.r9);
-    printf("r10: %x\tr11: %x\n",regs.r10,regs.r11);
-    printf("r12: %x\tr13: %x\n",regs.r12,regs.r13);
-    printf("r14: %x\tr15: %x\n",regs.r14,regs.r15);
-    printf("rbp: %x\trsp: %x\n",regs.rbp,regs.rsp);
-    printf("rsi: %x\trdi: %x\n",regs.rsi,regs.rdi);
-    printf("rip: %x\teflags: %x\n",regs.rip,regs.eflags);
+    printf("rax: %llx\trbx: %llx\n",regs.rax,regs.rbx);
+    printf("rcx: %llx\trdx: %llx\n",regs.rcx,regs.rdx);
+    printf("r8: %llx\tr9: %llx\n",regs.r8,regs.r9);
+    printf("r10: %llx\tr11: %llx\n",regs.r10,regs.r11);
+    printf("r12: %llx\tr13: %llx\n",regs.r12,regs.r13);
+    printf("r14: %llx\tr15: %llx\n",regs.r14,regs.r15);
+    printf("rbp: %llx\trsp: %llx\n",regs.rbp,regs.rsp);
+    printf("rsi: %llx\trdi: %llx\n",regs.rsi,regs.rdi);
+    printf("rip: %llx\teflags: %llx\n",regs.rip,regs.eflags);
     #else
     puts("Architecure not supported");
     #endif
@@ -198,8 +196,7 @@ int print_all_registers(pid_t pid){
 int modify_register(pid_t pid, char* reg,unsigned long long int value){
     struct user_regs_struct regs;
     ptrace(PTRACE_GETREGS,pid,NULL,&regs);
-        unsigned long long int target = register_to_address(&regs,reg);
-        *target = value;
+        unsigned long long int * target = register_to_address(&regs,reg);
+        (*target) = value;
         ptrace(PTRACE_SETREGS,pid,NULL,&regs);
-    }
 }
