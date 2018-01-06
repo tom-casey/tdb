@@ -6,7 +6,8 @@
 #include <unistd.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
-#include <assert.h>
+#include <dwarf.h>
+#include <libdwarf.h>
 #include "tdb.h"
 #include "breakpoint.h"
 int fork_to_child(int argc, char *argv[]);
@@ -38,6 +39,7 @@ int main(int argc, char *argv[]) {
     }
     char **bps = NULL;
     if (brkpt) {
+        printf("b argument is %s\n",brkpt);
         bps = str_split(brkpt, ',');
     }
     if (pid == -1) {
@@ -63,11 +65,12 @@ int main(int argc, char *argv[]) {
         }
         for (int i = 0; i < num_bpts; i++) {
             bplist[i] = malloc(sizeof(Breakpoint));
-            sscanf(bps[i], "%p", &bplist[i]->addr);
+            sscanf(bps[i], "%x", &bplist[i]->addr);
             if (!(bplist[i]->addr)) {
                 fprintf(stderr,
                         "%s is not a valid memory address. Skipping\n",
                         bps[i]);
+                continue;
             }
             printf("Breakpoint to be set @ %p\n",bplist[i]->addr);
             insert_bp(bplist[i], pid);
@@ -87,9 +90,33 @@ int main(int argc, char *argv[]) {
           redo:
             puts("(q)uit\t(r)egisters\t(s)inglestep\t(c)ontinue\t(m)odify registers");
             char input;
-            char* opt;
+            char* opt={'\0'};
             unsigned long long int val;
-            scanf(" %c %s %llx",&input,opt,&val);
+            size_t line_size;
+            char* line = NULL;
+            getline(&line,&line_size,stdin);
+            char *pos;
+            if ((pos=strchr(line, '\n')) != NULL)
+                *pos = '\0';
+            char* token;
+            char* state;
+            token = strtok_r(line," ",&state);
+            input = token[0];
+            if(strlen(token)>1){
+                goto redo;
+            }
+            token = strtok_r(NULL," ",&state);
+            if(token!=NULL){
+                opt = malloc(strlen(token)+1);
+                strcpy(opt,token);
+            }
+            token = strtok_r(NULL," ",&state);
+            if(token!=NULL){
+                if(sscanf(token," %llx",&val)==0){
+                    printf("Invalid value %s\n",token);
+                    goto redo;
+                }
+            }
             fflush(stdin);
             switch (input) {
                case 'q':
@@ -101,17 +128,18 @@ int main(int argc, char *argv[]) {
                    ptrace(PTRACE_CONT, pid, NULL, 0);
                    break;
                case 'm':
-                   if(!opt||!val){
+                   if(!opt){
                        printf("Error invalid command: m [register] [value]\n");
-                       goto redo;
                    }
                    if(modify_register(pid,opt,val)==-1){
                        printf("Invalid register!\n");
-                       goto redo;
                    }
+                   goto redo;
                case 'r':
                    if(opt){
-                       print_register(pid,opt);
+                       if(print_register(pid,opt)==-1){
+                           goto redo;
+                       }
                    }
                    print_all_registers(pid);
                default:
@@ -135,7 +163,12 @@ int fork_to_child(int argc, char *argv[]) {
 }
 int print_register(pid_t pid, char* reg){
     struct user_regs_struct regs;
+    ptrace(PTRACE_GETREGS,pid,NULL,&regs);
     unsigned long long int* addr = register_to_address(&regs, reg);
+    if(!addr){
+        printf("Register \"%s\" not found\n",reg);
+        return -1;
+    }
     printf("%s: %llx\n",reg,*addr);
 }
 unsigned long long int* register_to_address(struct user_regs_struct * regs, char* string){
