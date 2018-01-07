@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
         for (int i = 0; i < num_bpts; i++) {
             bplist[i] = malloc(sizeof(Breakpoint));
             sscanf(bps[i], "%x", &bplist[i]->addr);
-            if (!(bplist[i]->addr)) {
+            if(!(bplist[i]->addr)) {
                 fprintf(stderr,
                         "%s is not a valid memory address. Skipping\n",
                         bps[i]);
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
                    int num_breakpoints = sizeof(bplist) / sizeof(Breakpoint *);
                    struct user_regs_struct regs;
                    ptrace(PTRACE_GETREGS,pid,NULL,&regs);
-                   void* location = regs.rip -1;
+                   void* location =(void*) regs.rip -1;
                    for(int i = 0;i<num_breakpoints;i++){
                        if(bplist[i]->addr == location && bplist[i]->enabled){
                            regs.rip = regs.rip-1;
@@ -144,6 +144,7 @@ int main(int argc, char *argv[]) {
                case 'm':
                    if(!opt){
                        printf("Error invalid command: m [register] [value]\n");
+                       goto redo;
                    }
                    if(modify_register(pid,opt,val)==-1){
                        printf("Invalid register!\n");
@@ -152,8 +153,9 @@ int main(int argc, char *argv[]) {
                case 'r':
                    if(opt){
                        if(print_register(pid,opt)==-1){
-                           goto redo;
+                           printf("Register not found\n");
                        }
+                       goto redo;
                    }
                    print_all_registers(pid);
                default:
