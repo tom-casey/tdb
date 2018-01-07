@@ -6,8 +6,6 @@
 #include <unistd.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
-#include <dwarf.h>
-#include <libdwarf.h>
 #include "tdb.h"
 #include "breakpoint.h"
 int fork_to_child(int argc, char *argv[]);
@@ -125,6 +123,22 @@ int main(int argc, char *argv[]) {
                    ptrace(PTRACE_SINGLESTEP, pid, NULL, 0);
                    break;
                case 'c':
+                   asm("nop");//C is shit and this makes the compiler happy
+                   int num_breakpoints = sizeof(bplist) / sizeof(Breakpoint *);
+                   struct user_regs_struct regs;
+                   ptrace(PTRACE_GETREGS,pid,NULL,&regs);
+                   void* location = regs.rip -1;
+                   for(int i = 0;i<num_breakpoints;i++){
+                       if(bplist[i]->addr == location && bplist[i]->enabled){
+                           regs.rip = regs.rip-1;
+                           ptrace(PTRACE_SETREGS,pid,NULL,&regs);
+                           remove_bp(bplist[i],pid);
+                           ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
+                           waitpid(pid,NULL,0);
+                           insert_bp(bplist[i],pid);
+                           break;
+                       }
+                   }
                    ptrace(PTRACE_CONT, pid, NULL, 0);
                    break;
                case 'm':
