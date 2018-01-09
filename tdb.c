@@ -275,13 +275,14 @@ int print_all_registers(pid_t pid) {
     puts("Architecure not supported");
 #endif
 }
+
 //modify a given register
 int modify_register(pid_t pid, char *reg, unsigned long long int value) {
     struct user_regs_struct regs;
     ptrace(PTRACE_GETREGS, pid, NULL, &regs);
     //resolve our string to a register
     unsigned long long int *target = register_to_address(&regs, reg);
-    if(!target){
+    if (!target) {
         printf("Bad register name\n");
         return -1;
     }

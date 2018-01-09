@@ -18,6 +18,7 @@ int insert_bp(Breakpoint * bp, pid_t pid) {
     bp->enabled = 1;
     return 1;
 }
+
 //replace the interrupt instruction with the original instruction
 int remove_bp(Breakpoint * bp, pid_t pid) {
     ptrace(PTRACE_POKEDATA, pid, bp->addr, bp->save);
