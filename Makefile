@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-lexplain -I. -I/usr/include/libdwarf/ -g
+CFLAGS=-I. -g
 DEPS = tdb.h breakpoint.h
 OBJ = tdb.o breakpoint.o utils.o
 
